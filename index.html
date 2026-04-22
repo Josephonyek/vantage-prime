@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantage Prime | Global Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-white text-slate-900 font-sans">
+    <nav class="p-4 flex justify-between items-center border-b border-slate-100 sticky top-0 bg-white/90 backdrop-blur-md z-50">
+        <h1 class="text-2xl font-black text-indigo-600 italic">VANTAGE</h1>
+        <div class="flex gap-3">
+            <a href="login.html" class="text-sm font-bold p-2 text-slate-500">Sign In</a>
+            <a href="seller.html" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold">Sell Goods</a>
+        </div>
+    </nav>
+
+    <main class="p-6">
+        <h2 class="text-3xl font-black mb-8">Featured Goods</h2>
+        <div id="goods-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <p class="text-slate-400 animate-pulse">Establishing secure connection...</p>
+        </div>
+    </main>
+
+    <script type="module">
+        const { createClient } = supabase;
+        const _supabase = createClient('sb_publishable_5DdxkQIBnFx6SiLilDtJmA_Wj8tBm_J', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0');
+
+        async function fetchApprovedGoods() {
+            const { data } = await _supabase.from('products').select('*').eq('is_approved', true);
+            const container = document.getElementById('goods-container');
+            if (data && data.length > 0) {
+                container.innerHTML = data.map(item => `
+                    <div class="border rounded-3xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="aspect-square bg-slate-100 rounded-2xl mb-4"></div>
+                        <h3 class="font-bold text-slate-800">${item.name}</h3>
+                        <p class="text-indigo-600 font-black mb-3">₦${item.price}</p>
+                        <button class="w-full bg-indigo-50 text-indigo-600 py-3 rounded-xl text-xs font-bold uppercase tracking-widest">Order Now</button>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = "<p>No goods available yet.</p>";
+            }
+        }
+        fetchApprovedGoods();
+    </script>
+</body>
+          </html>

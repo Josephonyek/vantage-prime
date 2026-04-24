@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-indigo-50 p-6 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-[3rem] shadow-xl w-full max-w-lg border border-indigo-100">
+        <h2 class="text-3xl font-black text-indigo-600 mb-8 tracking-tight">Upload Goods</h2>
+        
+        <div class="space-y-4">
+            <input type="text" id="g-name" placeholder="Title of Goods" class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50">
+            <textarea id="g-desc" placeholder="Detailed Description..." class="w-full p-4 border rounded-2xl outline-none bg-slate-50 h-32"></textarea>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="g-price" placeholder="Price (₦)" class="p-4 border rounded-2xl bg-slate-50">
+                <input type="text" id="g-contact" placeholder="Contact Info" class="p-4 border rounded-2xl bg-slate-50">
+            </div>
+            <input type="text" id="g-image" placeholder="Paste Image URL" class="w-full p-4 border rounded-2xl bg-slate-50">
+            
+            <button id="submitBtn" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg hover:bg-indigo-700 transition-colors">
+                Publish to Gallery
+            </button>
+            <a href="dashboard.html" class="block text-center text-slate-400 text-sm mt-4">Cancel and Return</a>
+        </div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('submitBtn').onclick = async () => {
+            const { data: { user } } = await _supabase.auth.getUser();
+            
+            const { error } = await _supabase.from('products').insert([{
+                name: document.getElementById('g-name').value,
+                price: document.getElementById('g-price').value,
+                image_url: document.getElementById('g-image').value,
+                seller_id: user.id,
+                is_approved: false // Admin must verify!
+            }]);
+
+            if(!error) {
+                alert("Upload Successful! Waiting for Admin Approval.");
+                window.location.href = 'dashboard.html';
+            } else {
+                alert("Upload failed: " + error.message);
+            }
+        };
+    </script>
+</body>
+</html>

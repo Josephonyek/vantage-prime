@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Vantage Prime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50">
+
+    <nav class="p-6 bg-white border-b flex justify-between items-center">
+        <h1 class="text-xl font-black text-indigo-600">VANTAGE PANEL</h1>
+        <button onclick="_supabase.auth.signOut().then(()=>location.href='index.html')" class="text-red-500 font-bold text-sm">Logout</button>
+    </nav>
+
+    <div class="p-6 max-w-4xl mx-auto">
+        <header class="mb-10">
+            <h2 id="welcome-user" class="text-3xl font-black text-slate-800 tracking-tight">Loading...</h2>
+            <p id="user-role-badge" class="mt-2 inline-block px-3 py-1 bg-indigo-100 text-indigo-600 rounded-full text-xs font-bold uppercase"></p>
+        </header>
+
+        <div id="seller-tools" class="hidden space-y-6">
+            <div class="bg-indigo-600 p-8 rounded-[2rem] text-white shadow-xl shadow-indigo-100">
+                <p class="opacity-80">Wallet Balance</p>
+                <h3 class="text-4xl font-black mt-2">₦0.00</h3>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button class="bg-white p-6 rounded-3xl border border-slate-200 font-bold text-center shadow-sm">Upload Goods</button>
+                <button class="bg-white p-6 rounded-3xl border border-slate-200 font-bold text-center shadow-sm">My Orders</button>
+            </div>
+        </div>
+
+        <div id="customer-tools" class="hidden space-y-6">
+            <div class="bg-slate-900 p-8 rounded-[2rem] text-white shadow-xl">
+                <p class="opacity-80">Active Orders</p>
+                <h3 class="text-4xl font-black mt-2">0 Items</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <a href="index.html" class="bg-white p-6 rounded-3xl border border-slate-200 font-bold text-center block shadow-sm">Browse Market →</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function checkRole() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            if(!user) return window.location.href = 'login.html';
+
+            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+
+            document.getElementById('welcome-user').innerText = `Hello, ${profile.full_name}`;
+            document.getElementById('user-role-badge').innerText = profile.role;
+
+            if(profile.role === 'seller') {
+                document.getElementById('seller-tools').classList.remove('hidden');
+            } else {
+                document.getElementById('customer-tools').classList.remove('hidden');
+            }
+        }
+        checkRole();
+    </script>
+</body>
+  </html>

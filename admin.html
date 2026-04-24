@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vantage Command | Admin Only</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans min-h-screen">
+
+    <nav class="p-6 border-b border-slate-800 bg-slate-900 flex justify-between items-center sticky top-0 z-50">
+        <div>
+            <h1 class="text-xl font-black text-indigo-500 tracking-widest">VANTAGE ADMIN</h1>
+            <p class="text-[10px] text-slate-500 font-mono uppercase">System Version 2.0.4 - Secure Mode</p>
+        </div>
+        <button onclick="location.href='dashboard.html'" class="text-xs bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">Back to Dashboard</button>
+    </nav>
+
+    <div class="p-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-red-950/20 border border-red-500/30 p-6 rounded-[2rem]">
+                <h2 class="text-red-500 font-bold text-xs uppercase tracking-tighter mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span> Live Security Logs
+                </h2>
+                <div id="security-logs" class="space-y-3 font-mono text-[11px] h-64 overflow-y-auto pr-2 text-red-200/70">
+                    [Scanning for breaches...]
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-[2rem]">
+                <h2 class="text-slate-400 font-bold text-xs uppercase mb-4">Market Stats</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-800 rounded-2xl text-center">
+                        <p class="text-2xl font-black text-white" id="stat-users">0</p>
+                        <p class="text-[10px] text-slate-500">Users</p>
+                    </div>
+                    <div class="p-4 bg-slate-800 rounded-2xl text-center">
+                        <p class="text-2xl font-black text-indigo-400" id="stat-products">0</p>
+                        <p class="text-[10px] text-slate-500">Goods</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-8">
+            
+            <section class="bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                    <h2 class="font-bold">Pending Approval</h2>
+                    <span class="bg-yellow-500/10 text-yellow-500 text-[10px] px-2 py-1 rounded-md font-bold italic">Verification Required</span>
+                </div>
+                <div id="approval-list" class="divide-y divide-slate-800">
+                    <p class="p-8 text-center text-slate-500 text-sm">No goods waiting for approval.</p>
+                </div>
+            </section>
+
+            <section class="bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden">
+                <div class="p-6 border-b border-slate-800">
+                    <h2 class="font-bold text-red-400">User Management & Ban Hammer</h2>
+                </div>
+                <div id="user-list" class="p-4">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-slate-500 text-xs">
+                            <tr>
+                                <th class="p-3">User</th>
+                                <th class="p-3">Role</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body" class="divide-y divide-slate-800">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 1. SECURITY GATE
+        async function checkAdmin() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            const { data: profile } = await _supabase.from('profiles').select('role').eq('id', user?.id).single();
+            if (profile?.role !== 'admin') {
+                alert("Restricted Area!");
+                window.location.href = 'index.html';
+            }
+        }
+        checkAdmin();
+
+        // 2. LOAD SECURITY LOGS
+        async function fetchLogs() {
+            const { data } = await _supabase.from('security_logs').select('*').order('event_time', { ascending: false }).limit(10);
+            document.getElementById('security-logs').innerHTML = data.map(log => 
+                `<div class="mb-2 underline decoration-red-900/50"> >> [${log.event_type.toUpperCase()}] : ${log.details}</div>`
+            ).join('');
+        }
+
+        // 3. LOAD PENDING PRODUCTS
+        async function fetchPending() {
+            const { data } = await _supabase.from('products').select('*, profiles(full_name)').eq('is_approved', false);
+            const list = document.getElementById('approval-list');
+            if (data.length > 0) {
+                list.innerHTML = data.map(p => `
+                    <div class="p-4 flex justify-between items-center hover:bg-slate-800/50 transition-colors">
+                        <div>
+                            <p class="font-bold text-white">${p.name}</p>
+                            <p class="text-[10px] text-slate-500">Seller: ${p.profiles?.full_name} | Price: ₦${p.price}</p>
+                        </div>
+                        <button onclick="approveProduct(${p.id})" class="bg-indigo-600 text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-indigo-500">APPROVE</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 4. LOAD USERS FOR BANNING
+        async function fetchUsers() {
+            const { data } = await _supabase.from('profiles').select('*');
+            document.getElementById('stat-users').innerText = data.length;
+            document.getElementById('user-table-body').innerHTML = data.map(u => `
+                <tr class="hover:bg-slate-800/30">
+                    <td class="p-3 font-medium text-white">${u.full_name}</td>
+                    <td class="p-3 capitalize text-slate-400 text-xs">${u.role}</td>
+                    <td class="p-3">
+                        <span class="${u.status === 'active' ? 'text-green-500' : 'text-red-500'} text-[10px] font-bold uppercase">${u.status}</span>
+                    </td>
+                    <td class="p-3 text-right">
+                        ${u.role !== 'admin' ? `
+                            <button onclick="toggleBan('${u.id}', '${u.status}')" class="text-[10px] font-bold p-2 ${u.status === 'active' ? 'text-red-400' : 'text-green-400'}">
+                                ${u.status === 'active' ? 'BAN' : 'UNBAN'}
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 5. ACTIONS
+        window.approveProduct = async (pid) => {
+            await _supabase.from('products').update({ is_approved: true }).eq('id', pid);
+            alert("Product Live on Market!");
+            fetchPending();
+        };
+
+        window.toggleBan = async (uid, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+            await _supabase.from('profiles').update({ status: newStatus }).eq('id', uid);
+            alert(`User status changed to ${newStatus}`);
+            fetchUsers();
+        };
+
+        // INITIALIZE
+        fetchLogs();
+        fetchPending();
+        fetchUsers();
+    </script>
+</body>
+</html>

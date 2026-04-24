@@ -3,47 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vantage Prime | Global Store</title>
+    <title>Vantage Prime | Verified Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-white text-slate-900 font-sans">
-    <nav class="p-4 flex justify-between items-center border-b border-slate-100 sticky top-0 bg-white/90 backdrop-blur-md z-50">
-        <h1 class="text-2xl font-black text-indigo-600 italic">VANTAGE</h1>
-        <div class="flex gap-3">
-            <a href="login.html" class="text-sm font-bold p-2 text-slate-500">Sign In</a>
-            <a href="seller.html" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold">Sell Goods</a>
+<body class="bg-gray-50 text-gray-900">
+
+    <nav class="p-4 bg-white/90 backdrop-blur-md border-b flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-2xl font-black text-indigo-600 tracking-tighter italic">VANTAGE PRIME</h1>
+        <div class="flex items-center gap-4">
+            <a href="login.html" class="text-sm font-bold text-gray-400 hover:text-indigo-600">Login</a>
+            <a href="login.html" class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl font-bold shadow-lg text-sm">Join Now</a>
         </div>
     </nav>
 
-    <main class="p-6">
-        <h2 class="text-3xl font-black mb-8">Featured Goods</h2>
-        <div id="goods-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <p class="text-slate-400 animate-pulse">Establishing secure connection...</p>
+    <header class="py-12 px-6 text-center bg-white border-b">
+        <h2 class="text-5xl font-black mb-4">Secure Goods. <br><span class="text-indigo-600 italic">No Hacks.</span></h2>
+        <p class="text-gray-500 max-w-md mx-auto mb-8">Nigeria's most trusted multi-seller platform. Every product is admin-verified.</p>
+    </header>
+
+    <main class="p-6 max-w-6xl mx-auto">
+        <div id="goods-container" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div id="status-msg" class="col-span-full py-20 text-center">
+                <div class="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-4 text-gray-400 font-medium italic">Verifying Secure Connection...</p>
+            </div>
         </div>
     </main>
 
     <script type="module">
-        const { createClient } = supabase;
-        const _supabase = createClient('sb_publishable_5DdxkQIBnFx6SiLilDtJmA_Wj8tBm_J', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0');
+        // IMPLEMENTATION OF YOUR CREDENTIALS
+        const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
 
-        async function fetchApprovedGoods() {
-            const { data } = await _supabase.from('products').select('*').eq('is_approved', true);
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function initStore() {
             const container = document.getElementById('goods-container');
+            const statusMsg = document.getElementById('status-msg');
+
+            // 1. SECURITY CHECK: Is the current user banned?
+            const { data: { user } } = await _supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await _supabase.from('profiles').select('status').eq('id', user.id).single();
+                if (profile && profile.status === 'banned') {
+                    alert("🚨 SECURITY ALERT: Your account has been suspended for violating terms.");
+                    await _supabase.auth.signOut();
+                    window.location.reload();
+                    return;
+                }
+            }
+
+            // 2. LOAD PRODUCTS: Only show Admin-Approved goods
+            const { data, error } = await _supabase
+                .from('products')
+                .select('*')
+                .eq('is_approved', true);
+
+            if (error) {
+                statusMsg.innerHTML = `<p class="text-red-500">Database Error: ${error.message}</p>`;
+                return;
+            }
+
             if (data && data.length > 0) {
+                statusMsg.style.display = 'none';
                 container.innerHTML = data.map(item => `
-                    <div class="border rounded-3xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="aspect-square bg-slate-100 rounded-2xl mb-4"></div>
-                        <h3 class="font-bold text-slate-800">${item.name}</h3>
-                        <p class="text-indigo-600 font-black mb-3">₦${item.price}</p>
-                        <button class="w-full bg-indigo-50 text-indigo-600 py-3 rounded-xl text-xs font-bold uppercase tracking-widest">Order Now</button>
+                    <div class="bg-white border border-gray-100 rounded-[2rem] p-4 shadow-sm hover:shadow-xl transition-all duration-300">
+                        <div class="aspect-square bg-gray-100 rounded-[1.5rem] mb-4 overflow-hidden">
+                            <img src="${item.image_url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="font-bold text-gray-800">${item.name}</h3>
+                        <p class="text-indigo-600 font-black text-xl">₦${item.price}</p>
+                        <button onclick="window.open('https://wa.me/YOUR_PHONE?text=I want to buy ${item.name}')" 
+                                class="w-full mt-3 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-widest active:scale-95 transition-transform">
+                            Order Now
+                        </button>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = "<p>No goods available yet.</p>";
+                statusMsg.innerHTML = '<p class="text-gray-400">The vault is empty. Check back after Admin approval.</p>';
             }
         }
-        fetchApprovedGoods();
+
+        initStore();
     </script>
 </body>
-          </html>
+    </html>

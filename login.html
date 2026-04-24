@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access | Vantage Prime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-100">
+        <div id="auth-header" class="text-center mb-8">
+            <h1 class="text-3xl font-black text-indigo-600 italic">VANTAGE</h1>
+            <p id="auth-subtitle" class="text-slate-400 text-sm mt-2">Sign in to continue</p>
+        </div>
+
+        <div id="login-form" class="space-y-4">
+            <input type="email" id="login-email" placeholder="Email Address" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="password" id="login-pass" placeholder="Password" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500">
+            <button id="do-login" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">Login</button>
+            <p class="text-center text-sm">New here? <button onclick="toggleAuth()" class="text-indigo-600 font-bold">Create Account</button></p>
+        </div>
+
+        <div id="signup-form" class="hidden space-y-4">
+            <div id="step-1" class="space-y-4">
+                <input type="text" id="s-name" placeholder="Full Name" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <input type="email" id="s-email" placeholder="Email Address" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <input type="password" id="s-pass" placeholder="Password" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <input type="password" id="s-confirm" placeholder="Confirm Password" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <button onclick="nextStep()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Next Details →</button>
+            </div>
+
+            <div id="step-2" class="hidden space-y-4">
+                <input type="text" id="s-address" placeholder="Physical Address" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <input type="tel" id="s-phone" placeholder="Phone Number" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                <input type="tel" id="s-whatsapp" placeholder="WhatsApp Number" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none">
+                
+                <select id="s-role" class="w-full p-4 bg-slate-50 border rounded-2xl outline-none font-bold text-indigo-600">
+                    <option value="customer">I want to Buy (Customer)</option>
+                    <option value="seller">I want to Sell (Seller)</option>
+                </select>
+
+                <button id="do-signup" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">Create Account & Verify</button>
+                <button onclick="prevStep()" class="w-full text-slate-400 text-sm">← Back</button>
+            </div>
+            <p class="text-center text-sm">Already a member? <button onclick="toggleAuth()" class="text-indigo-600 font-bold">Login</button></p>
+        </div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // UI TOGGLES
+        window.toggleAuth = () => {
+            document.getElementById('login-form').classList.toggle('hidden');
+            document.getElementById('signup-form').classList.toggle('hidden');
+            document.getElementById('auth-subtitle').innerText = "Join the Vantage network";
+        }
+        window.nextStep = () => {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+        }
+        window.prevStep = () => {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+        }
+
+        // SIGNUP LOGIC
+        document.getElementById('do-signup').onclick = async () => {
+            const email = document.getElementById('s-email').value;
+            const pass = document.getElementById('s-pass').value;
+            const confirm = document.getElementById('s-confirm').value;
+            const name = document.getElementById('s-name').value;
+            const role = document.getElementById('s-role').value;
+
+            if(pass !== confirm) return alert("Passwords do not match!");
+
+            // 1. Create User in Auth
+            const { data, error } = await _supabase.auth.signUp({
+                email: email,
+                password: pass,
+                options: { data: { full_name: name, role: role }, emailRedirectTo: window.location.origin + '/dashboard.html' }
+            });
+
+            if(error) alert(error.message);
+            else {
+                // 2. Save extra info to Profiles table
+                await _supabase.from('profiles').insert([{
+                    id: data.user.id,
+                    full_name: name,
+                    role: role,
+                    whatsapp_number: document.getElementById('s-whatsapp').value
+                }]);
+                alert("Verification email sent! Check your inbox to continue to your dashboard.");
+            }
+        };
+
+        // LOGIN LOGIC
+        document.getElementById('do-login').onclick = async () => {
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-pass').value
+            });
+            if(error) alert(error.message);
+            else window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+                  </html>

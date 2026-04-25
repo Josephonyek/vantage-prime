@@ -16,36 +16,30 @@
             <div class="absolute w-24 h-24 border-[3px] border-t-blue-500 rounded-full animate-spin"></div>
             <span class="text-white font-black text-4xl italic tracking-tighter">V</span>
         </div>
-        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Syncing your profile...</p>
+        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Determining your access level...</p>
     </div>
 
     <div class="flex min-h-screen">
+        <!-- Sidebar -->
         <aside class="w-72 bg-[#0F172A] hidden lg:flex flex-col p-8 sticky top-0 h-screen text-white border-r border-white/5">
             <div class="mb-12">
                 <h1 class="text-2xl font-black text-blue-500 italic">VANTAGE<span class="text-white not-italic font-light">PRIME</span></h1>
             </div>
             
-            <nav class="space-y-4 flex-1">
-                <button class="w-full text-left p-4 rounded-2xl bg-blue-600 font-bold shadow-2xl shadow-blue-900/40 flex items-center gap-3">
-                    <span>🏠</span> Marketplace
-                </button>
-                
-                <a href="admin.html" id="side-admin" class="hidden w-full flex items-center gap-3 p-4 rounded-2xl bg-white/5 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-transparent hover:border-red-500/20 font-bold transition-all">
-                    <span>🛡️</span> Control Center
-                </a>
+            <nav class="space-y-4 flex-1" id="sidebar-nav">
+                <!-- Nav items will be populated based on role -->
             </nav>
 
             <button onclick="logout()" class="p-4 text-slate-500 hover:text-white font-bold text-[10px] uppercase tracking-widest transition-colors">Terminate Session</button>
         </aside>
 
         <main class="flex-1 p-6 lg:p-12 max-w-7xl mx-auto w-full">
-            
             <header class="flex justify-between items-start mb-12">
                 <div>
                     <h2 id="userName" class="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <div id="roleBadge" class="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg uppercase tracking-widest border border-slate-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                        Loading role...
+                        Loading...
                     </div>
                 </div>
                 
@@ -58,37 +52,63 @@
                 </div>
             </header>
 
-            <!-- Quick Refresh Button (for testing) -->
-            <button onclick="manualRefresh()" class="mb-6 px-5 py-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 rounded-2xl transition-colors">
-                🔄 Refresh Role & Balance
-            </button>
-
-            <div id="admin-box" class="hidden mb-12">
-                <a href="admin.html" class="group block bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden border-b-[6px] border-blue-600 hover:scale-[1.01] transition-all">
-                    <div class="relative z-10 flex justify-between items-center">
-                        <div>
-                            <h4 class="text-blue-400 font-bold text-[10px] uppercase tracking-[0.5em] mb-3">Privileged Access</h4>
-                            <h3 class="text-white text-4xl font-black italic tracking-tighter">Control Center</h3>
-                            <p class="text-slate-400 text-sm mt-3 max-w-md leading-relaxed">System-wide management: verify goods, audit user wallets, and manage global inventory.</p>
+            <!-- ADMIN CONTENT -->
+            <div id="admin-content" class="hidden">
+                <div id="admin-box">
+                    <a href="admin.html" class="group block bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden border-b-[6px] border-blue-600 hover:scale-[1.01] transition-all">
+                        <div class="relative z-10 flex justify-between items-center">
+                            <div>
+                                <h4 class="text-blue-400 font-bold text-[10px] uppercase tracking-[0.5em] mb-3">Privileged Access</h4>
+                                <h3 class="text-white text-4xl font-black italic tracking-tighter">Control Center</h3>
+                                <p class="text-slate-400 text-sm mt-3 max-w-md leading-relaxed">System-wide management: verify goods, audit user wallets, and manage global inventory.</p>
+                            </div>
+                            <div class="bg-white/5 p-8 rounded-[2.5rem] text-4xl border border-white/10 shadow-inner group-hover:bg-blue-600/20 group-hover:text-blue-400 transition-all">⚙️</div>
                         </div>
-                        <div class="bg-white/5 p-8 rounded-[2.5rem] text-4xl border border-white/10 shadow-inner group-hover:bg-blue-600/20 group-hover:text-blue-400 transition-all">⚙️</div>
-                    </div>
-                    <div class="absolute -right-12 -bottom-12 text-white/5 text-[12rem] font-black italic select-none pointer-events-none">ADMIN</div>
-                </a>
+                        <div class="absolute -right-12 -bottom-12 text-white/5 text-[12rem] font-black italic select-none pointer-events-none">ADMIN</div>
+                    </a>
+                </div>
             </div>
 
-            <section>
+            <!-- SELLER CONTENT -->
+            <div id="seller-content" class="hidden">
+                <div class="bg-white rounded-[3rem] p-10 shadow-sm mb-12">
+                    <h3 class="text-2xl font-black mb-4">Seller Dashboard</h3>
+                    <p class="text-slate-600 mb-8">Manage your products, track sales, and monitor your inventory.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-slate-50 p-8 rounded-3xl text-center">
+                            <div class="text-5xl mb-4">📦</div>
+                            <h4 class="font-bold">My Products</h4>
+                            <p class="text-sm text-slate-500 mt-2">Upload and manage your listings</p>
+                            <button onclick="alert('Seller product management coming soon')" class="mt-6 w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">Manage Products</button>
+                        </div>
+                        <div class="bg-slate-50 p-8 rounded-3xl text-center">
+                            <div class="text-5xl mb-4">💰</div>
+                            <h4 class="font-bold">Sales Overview</h4>
+                            <p class="text-sm text-slate-500 mt-2">Track your earnings</p>
+                        </div>
+                        <div class="bg-slate-50 p-8 rounded-3xl text-center">
+                            <div class="text-5xl mb-4">📊</div>
+                            <h4 class="font-bold">Analytics</h4>
+                            <p class="text-sm text-slate-500 mt-2">Performance insights</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARKETPLACE (visible to all) -->
+            <section id="marketplace-section">
                 <div class="flex items-center gap-4 mb-8">
                     <h3 class="text-xl font-black text-slate-800 italic">Marketplace</h3>
                     <div class="h-[1px] flex-1 bg-slate-200/60"></div>
                 </div>
                 <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <!-- Products load here -->
+                    <!-- Products loaded here -->
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- Pay Modal -->
     <div id="pay-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[1100] items-center justify-center p-4">
         <div class="bg-white p-12 rounded-[4rem] w-full max-w-md text-center shadow-2xl border border-white/20">
             <h3 class="text-3xl font-black mb-2 text-slate-900">Add Capital</h3>
@@ -108,35 +128,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
-
-        function applyCachedIdentity() {
-            const cName = localStorage.getItem('v_name');
-            if (cName) document.getElementById('userName').innerText = `Hello, ${cName} 👋`;
-        }
-
-        function revealAdmin() {
-            document.getElementById('admin-box').classList.remove('hidden');
-            document.getElementById('side-admin').classList.remove('hidden');
-            const badge = document.getElementById('roleBadge');
-            badge.textContent = "ADMIN ACCESS";
-            badge.classList.remove('bg-slate-100', 'text-slate-500');
-            badge.classList.add('bg-red-50', 'text-red-600');
-        }
-
-        function updateRoleUI(role) {
-            const badge = document.getElementById('roleBadge');
-            if (role === 'admin') {
-                revealAdmin();
-            } else if (role === 'seller') {
-                badge.textContent = "SELLER ACCOUNT";
-                badge.classList.remove('bg-red-50', 'text-red-600');
-                badge.classList.add('bg-slate-100', 'text-slate-500');
-            } else {
-                badge.textContent = "CUSTOMER";
-                badge.classList.remove('bg-red-50', 'text-red-600');
-                badge.classList.add('bg-slate-100', 'text-slate-500');
-            }
-        }
+        let currentRole = 'customer';
 
         function hideLoader() {
             const loader = document.getElementById('loader');
@@ -144,9 +136,43 @@
             setTimeout(() => loader.style.display = 'none', 400);
         }
 
-        async function boot() {
-            applyCachedIdentity();
+        function updateRoleUI(role) {
+            currentRole = role || 'customer';
+            const badge = document.getElementById('roleBadge');
 
+            if (role === 'admin') {
+                badge.textContent = "ADMIN ACCESS";
+                badge.classList.remove('bg-slate-100', 'text-slate-500');
+                badge.classList.add('bg-red-50', 'text-red-600');
+                showRoleContent('admin');
+            } else if (role === 'seller') {
+                badge.textContent = "SELLER ACCOUNT";
+                badge.classList.remove('bg-red-50', 'text-red-600');
+                badge.classList.add('bg-slate-100', 'text-slate-500');
+                showRoleContent('seller');
+            } else {
+                badge.textContent = "CUSTOMER";
+                badge.classList.remove('bg-red-50', 'text-red-600');
+                badge.classList.add('bg-slate-100', 'text-slate-500');
+                showRoleContent('customer');
+            }
+        }
+
+        function showRoleContent(role) {
+            // Hide all role-specific sections
+            document.getElementById('admin-content').classList.add('hidden');
+            document.getElementById('seller-content').classList.add('hidden');
+
+            // Show the correct one
+            if (role === 'admin') {
+                document.getElementById('admin-content').classList.remove('hidden');
+            } else if (role === 'seller') {
+                document.getElementById('seller-content').classList.remove('hidden');
+            }
+            // Customer sees only marketplace (already visible)
+        }
+
+        async function boot() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) {
                 location.href = 'login.html';
@@ -157,77 +183,54 @@
 
             const firstName = (currentUser.user_metadata?.full_name || currentUser.email || "User").split(' ')[0];
             document.getElementById('userName').innerText = `Hello, ${firstName} 👋`;
-            localStorage.setItem('v_name', firstName);
 
-            hideLoader(); // Hide loader very early
+            hideLoader();
 
-            // Load role & balance FIRST (fast path)
+            // Load role & balance first
             await syncProfileData();
 
-            // Then load products in background
+            // Load products
             loadProducts();
 
-            // Start realtime
+            // Start realtime updates
             listenForProfileChanges();
         }
 
         async function syncProfileData() {
             try {
-                const { data: p, error } = await _supabase
+                const { data: p } = await _supabase
                     .from('profiles')
                     .select('wallet_balance, role')
                     .eq('id', currentUser.id)
                     .single();
 
-                if (error) throw error;
-
                 if (p) {
-                    // Balance
                     document.getElementById('balance').innerText = `₦${(p.wallet_balance || 0).toLocaleString()}`;
-
-                    // Role
-                    const role = p.role || 'customer';
-                    localStorage.setItem('v_role', role);
-                    updateRoleUI(role);
-                    console.log('✅ Profile loaded - Role:', role);
+                    updateRoleUI(p.role);
                 }
             } catch (e) {
-                console.error('❌ Profile fetch error:', e);
+                console.error('Profile sync error:', e);
             }
         }
 
         function listenForProfileChanges() {
-            const channel = _supabase.channel('profile-sync')
+            _supabase.channel('profile-sync')
                 .on('postgres_changes', {
                     event: 'UPDATE',
                     schema: 'public',
                     table: 'profiles',
                     filter: `id=eq.${currentUser.id}`
                 }, (payload) => {
-                    console.log('🔴 Realtime update received:', payload.new);
-                    
                     const newData = payload.new;
                     
-                    // Balance update
                     if (newData.wallet_balance !== undefined) {
-                        const balEl = document.getElementById('balance');
-                        balEl.innerText = `₦${newData.wallet_balance.toLocaleString()}`;
-                        balEl.classList.add('text-blue-600', 'scale-110');
-                        setTimeout(() => balEl.classList.remove('text-blue-600', 'scale-110'), 1200);
+                        document.getElementById('balance').innerText = `₦${newData.wallet_balance.toLocaleString()}`;
                     }
-                    
-                    // Role update
                     if (newData.role) {
-                        localStorage.setItem('v_role', newData.role);
                         updateRoleUI(newData.role);
                     }
                 })
-                .subscribe((status) => {
-                    console.log('Realtime subscription status:', status);
-                    if (status === 'SUBSCRIBED') {
-                        console.log('✅ Realtime is ready for role & balance updates');
-                    }
-                });
+                .subscribe();
         }
 
         async function loadProducts() {
@@ -255,12 +258,6 @@
             }
         }
 
-        // Manual refresh for testing role/balance
-        window.manualRefresh = async () => {
-            await syncProfileData();
-            console.log('Manual refresh completed');
-        };
-
         window.pay = () => {
             const amount = document.getElementById('amt').value;
             if (!amount || amount <= 0) return;
@@ -279,7 +276,8 @@
             _supabase.auth.signOut().then(() => location.href = 'login.html');
         };
 
+        // Start the application
         boot();
     </script>
 </body>
-        </html>
+    </html>

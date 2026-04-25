@@ -3,99 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vantage Prime | Secured Dashboard</title>
+    <title>Vantage | Live Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body class="bg-[#F8FAFC] text-slate-900 overflow-x-hidden font-sans">
 
     <div id="loader" class="fixed inset-0 bg-[#0F172A] z-[999] flex flex-col items-center justify-center transition-all duration-500">
-        <div class="relative flex items-center justify-center mb-8">
-            <div class="absolute w-24 h-24 border-2 border-blue-500/10 rounded-full"></div>
-            <div class="absolute w-24 h-24 border-2 border-t-blue-500 rounded-full animate-spin"></div>
-            <span class="text-white font-black text-3xl italic">V</span>
+        <div class="relative flex items-center justify-center mb-6">
+            <div class="absolute w-20 h-20 border-2 border-blue-500/10 rounded-full"></div>
+            <div class="absolute w-20 h-20 border-2 border-t-blue-500 rounded-full animate-spin"></div>
+            <span class="text-white font-black text-2xl italic">V</span>
         </div>
-        <p id="loader-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] animate-pulse">Syncing Role Access</p>
+        <p id="loader-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em]">Establishing Secure Link...</p>
     </div>
 
     <div class="flex min-h-screen">
         <aside class="w-72 bg-[#0F172A] hidden lg:flex flex-col p-8 sticky top-0 h-screen text-white">
-            <div class="mb-12">
-                <h1 class="text-2xl font-black tracking-tighter text-blue-500">VANTAGE<span class="text-white font-light">PRIME</span></h1>
-            </div>
-            
+            <h1 class="text-2xl font-black text-blue-500 mb-12 italic">VANTAGE</h1>
             <nav class="space-y-3 flex-1">
-                <button onclick="location.reload()" class="w-full flex items-center gap-4 p-4 rounded-2xl bg-blue-600 text-white font-bold shadow-lg">
-                    <span>🏠</span> Marketplace
-                </button>
-                
-                <a href="upload.html" id="side-seller" class="hidden w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-800 text-slate-400 font-bold transition-all">
-                    <span>📤</span> Upload Goods
-                </a>
-
-                <a href="admin.html" id="side-admin" class="hidden w-full flex items-center gap-4 p-4 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold transition-all">
-                    <span>🛡️</span> Admin Portal
-                </a>
+                <button class="w-full text-left p-4 rounded-2xl bg-blue-600 font-bold shadow-lg">🏠 Home</button>
+                <a href="admin.html" id="side-admin" class="hidden w-full flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold">🛡️ Admin Portal</a>
             </nav>
-
-            <button onclick="logout()" class="p-4 text-slate-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">Terminate Session</button>
+            <button onclick="logout()" class="p-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Sign Out</button>
         </aside>
 
         <main class="flex-1 p-6 lg:p-12">
-            
-            <header class="flex justify-between items-start mb-12">
+            <header class="flex justify-between items-center mb-12">
                 <div>
-                    <h2 id="userName" class="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
-                    <div id="roleBadge" class="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black rounded-lg uppercase tracking-widest border border-blue-100">Loading Role...</div>
+                    <h2 id="userName" class="text-4xl font-black tracking-tight">Syncing...</h2>
+                    <p id="userRole" class="text-blue-600 font-black text-[10px] uppercase tracking-widest mt-1 opacity-50">Checking Authority</p>
                 </div>
-                
-                <div class="flex items-center gap-4">
+                <div class="flex gap-4">
                     <div class="bg-white shadow-xl shadow-blue-900/5 rounded-[2rem] px-8 py-4 border border-slate-100">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vault Balance</p>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Available Funds</p>
                         <h3 id="balance" class="text-2xl font-black text-slate-900">₦0.00</h3>
                     </div>
-                    <button onclick="document.getElementById('pay-modal').style.display='flex'" class="bg-blue-600 text-white w-14 h-14 rounded-[1.5rem] font-black shadow-lg shadow-blue-500/20 hover:rotate-90 transition-transform">
-                        +
-                    </button>
+                    <button onclick="document.getElementById('pay-modal').style.display='flex'" class="bg-blue-600 text-white w-14 h-14 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:scale-110 transition-transform">+</button>
                 </div>
             </header>
 
-            <div id="dynamic-content">
-                
-                <div id="admin-control-center" class="hidden mb-12 group cursor-pointer" onclick="location.href='admin.html'">
-                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden border-b-4 border-blue-500">
-                        <div class="relative z-10 flex justify-between items-center">
-                            <div>
-                                <h4 class="text-blue-400 font-black text-xs uppercase tracking-[0.3em] mb-3">Executive Access</h4>
-                                <h3 class="text-white text-3xl font-black">Control Center</h3>
-                                <p class="text-slate-400 text-sm mt-2 max-w-md">Override system settings, verify pending seller goods, and monitor financial flow.</p>
-                            </div>
-                            <div class="bg-white/5 p-6 rounded-[2rem] text-blue-500 text-4xl group-hover:scale-110 transition-transform">
-                                ⚙️
-                            </div>
+            <div id="control-center-box" class="hidden mb-12">
+                <a href="admin.html" class="block bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden border-b-4 border-blue-500 hover:scale-[1.01] transition-all">
+                    <div class="relative z-10 flex justify-between items-center">
+                        <div>
+                            <h4 class="text-blue-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-2 text-white/60">System Executive</h4>
+                            <h3 class="text-white text-3xl font-black">Control Center</h3>
+                            <p class="text-slate-400 text-sm mt-2">Manage products, verify transactions, and override system settings.</p>
                         </div>
-                        <div class="absolute -right-10 -bottom-10 text-white/5 text-[10rem] font-black italic select-none">ROOT</div>
+                        <div class="bg-white/10 p-6 rounded-[2rem] text-3xl">⚙️</div>
                     </div>
-                </div>
-
-                <div id="seller-stats" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                        <h4 class="font-bold text-slate-400 text-xs uppercase tracking-widest mb-2">Total Sales</h4>
-                        <p class="text-3xl font-black">₦0.00</p>
-                    </div>
-                    <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-lg shadow-blue-200 text-white cursor-pointer" onclick="location.href='upload.html'">
-                        <h4 class="font-bold text-blue-200 text-xs uppercase tracking-widest mb-2">Inventory</h4>
-                        <p class="text-2xl font-black">Upload New Item →</p>
-                    </div>
-                </div>
-
+                </a>
             </div>
 
-            <section id="gallery-section">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-black text-slate-800">Global Marketplace</h3>
-                    <button class="text-blue-600 font-bold text-xs uppercase hover:underline">View All</button>
-                </div>
-                <div id="grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <section>
+                <h3 class="text-xl font-black text-slate-800 mb-8">Marketplace Gallery</h3>
+                <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
                     <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
                 </div>
@@ -104,74 +68,82 @@
     </div>
 
     <div id="pay-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden z-[1000] items-center justify-center p-4">
-        <div class="bg-white p-12 rounded-[4rem] w-full max-w-md text-center shadow-2xl border border-white/20">
-            <h3 class="text-3xl font-black mb-2 text-slate-900">Add Capital</h3>
-            <p class="text-slate-400 text-sm mb-8">Funds will be added to your Vantage wallet via Paystack.</p>
-            <input type="number" id="amt" placeholder="₦ 0.00" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl mb-6 text-center font-black text-3xl outline-none focus:border-blue-500 transition-all">
-            <button onclick="pay()" class="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all">Secure Pay</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="mt-6 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Cancel Transaction</button>
+        <div class="bg-white p-12 rounded-[3.5rem] w-full max-w-md text-center shadow-2xl">
+            <h3 class="text-2xl font-black mb-2 text-slate-900 italic">Vault Funding</h3>
+            <p class="text-slate-400 text-sm mb-8">Increase your balance via secure gateway.</p>
+            <input type="number" id="amt" placeholder="₦ 0.00" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl mb-6 text-center font-black text-3xl outline-none focus:border-blue-500">
+            <button onclick="pay()" class="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl shadow-xl shadow-blue-500/20">Authorize Payment</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" class="mt-6 text-slate-400 text-[10px] font-black uppercase tracking-widest">Return to Market</button>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <script type="module">
         const SUPABASE_URL = 'https://qdoqkqzidpuchynuzkaz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkb3FrcXppZHB1Y2h5bnV6a2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0ODMyNzEsImV4cCI6MjA5MjA1OTI3MX0.NzXuTJd2384npxTNzdYGoNo9CcQDHqlwkUM-pV2xlV0';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let userSession = null;
+
         async function init() {
-            try {
-                // 1. Instant User Check
-                const { data: { session } } = await _supabase.auth.getSession();
-                if(!session) { window.location.href = 'login.html'; return; }
+            // 1. Instant Session Check
+            const { data: { session } } = await _supabase.auth.getSession();
+            if(!session) { location.href = 'login.html'; return; }
+            userSession = session;
 
-                // 2. Load Profile (Role & Money) + Products
-                const [pRes, gRes] = await Promise.all([
-                    _supabase.from('profiles').select('*').eq('id', session.user.id).single(),
-                    _supabase.from('products').select('*').eq('is_approved', true).limit(12)
-                ]);
+            // 2. Instant Name (No wait)
+            document.getElementById('userName').innerText = `Hello, ${session.user.user_metadata.full_name || 'User'}`;
 
-                if(pRes.data) {
-                    const user = pRes.data;
-                    document.getElementById('userName').innerText = `Hello, ${user.full_name.split(' ')[0]} 👋`;
-                    document.getElementById('balance').innerText = `₦${user.wallet_balance.toLocaleString()}`;
-                    document.getElementById('roleBadge').innerText = user.role;
+            // 3. Load Data & Listen for Changes
+            await syncProfile();
+            await loadProducts();
+            subscribeToWallet(); // Start the live price listener
 
-                    // --- ROLE LOGIC ---
-                    if(user.role === 'admin') {
-                        document.getElementById('admin-control-center').classList.remove('hidden');
-                        document.getElementById('side-admin').classList.remove('hidden');
-                        document.getElementById('side-seller').classList.remove('hidden'); // Admin can see all
-                    } else if(user.role === 'seller') {
-                        document.getElementById('seller-stats').classList.remove('hidden');
-                        document.getElementById('side-seller').classList.remove('hidden');
-                    }
+            // 4. Kill Loader
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+        }
+
+        async function syncProfile() {
+            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', userSession.user.id).single();
+            if(profile) {
+                document.getElementById('balance').innerText = `₦${profile.wallet_balance.toLocaleString()}`;
+                document.getElementById('userRole').innerText = profile.role + " ACCESS";
+                document.getElementById('userRole').style.opacity = '1';
+
+                if(profile.role === 'admin') {
+                    document.getElementById('control-center-box').classList.remove('hidden');
+                    document.getElementById('side-admin').classList.remove('hidden');
                 }
+            }
+        }
 
-                // Render Gallery
-                if(gRes.data) {
-                    document.getElementById('grid').innerHTML = gRes.data.map(i => `
-                        <div class="bg-white p-5 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-                            <div class="aspect-square bg-slate-50 rounded-[2.2rem] overflow-hidden mb-5">
-                                <img src="${i.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                            </div>
-                            <h5 class="font-bold text-xs truncate px-2 text-slate-800 uppercase tracking-wider">${i.name}</h5>
-                            <p class="text-blue-600 font-black text-lg px-2 mt-1">₦${i.price.toLocaleString()}</p>
-                            <button class="w-full mt-6 bg-slate-900 text-white py-3.5 rounded-[1.2rem] text-[9px] font-black uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">Order Item</button>
+        // --- THE AUTO-UPDATE ENGINE ---
+        function subscribeToWallet() {
+            _supabase
+                .channel('public:profiles')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userSession.user.id}` }, 
+                payload => {
+                    console.log('Wallet Updated Live:', payload.new.wallet_balance);
+                    document.getElementById('balance').innerText = `₦${payload.new.wallet_balance.toLocaleString()}`;
+                    // Trigger a tiny animation to show it updated
+                    document.getElementById('balance').classList.add('text-green-500', 'scale-110');
+                    setTimeout(() => document.getElementById('balance').classList.remove('text-green-500', 'scale-110'), 1000);
+                })
+                .subscribe();
+        }
+
+        async function loadProducts() {
+            const { data } = await _supabase.from('products').select('*').eq('is_approved', true).limit(10);
+            if(data) {
+                document.getElementById('grid').innerHTML = data.map(i => `
+                    <div class="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+                        <div class="aspect-square bg-slate-50 rounded-[2rem] overflow-hidden mb-4">
+                            <img src="${i.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                         </div>
-                    `).join('');
-                }
-
-                // Exit Loader
-                const ldr = document.getElementById('loader');
-                ldr.style.opacity = '0';
-                setTimeout(() => ldr.style.display = 'none', 500);
-
-            } catch (err) {
-                console.error("Dashboard Sync Failed:", err);
-                document.getElementById('loader').style.display = 'none';
+                        <h5 class="font-bold text-[10px] text-slate-500 uppercase tracking-widest truncate px-2">${i.name}</h5>
+                        <p class="text-blue-600 font-black text-lg px-2">₦${i.price.toLocaleString()}</p>
+                    </div>
+                `).join('');
             }
         }
 
@@ -179,9 +151,12 @@
             const amount = document.getElementById('amt').value;
             const handler = PaystackPop.setup({
                 key: 'pk_test_77e96f0549cd29e76ce2117f8adf00a5a96658ea',
-                email: 'vantage@vantage.prime',
+                email: userSession.user.email,
                 amount: amount * 100,
-                callback: () => location.reload()
+                callback: (res) => {
+                    document.getElementById('pay-modal').style.display = 'none';
+                    alert("Payment received! Watch your balance update automatically.");
+                }
             });
             handler.openIframe();
         };
@@ -191,4 +166,4 @@
         init();
     </script>
 </body>
-                    </html>
+</html>

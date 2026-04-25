@@ -7,6 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        /* Quick fallback styles while Tailwind loads */
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-500 selection:text-white">
 
@@ -16,7 +21,7 @@
             <div class="absolute w-24 h-24 border-[3px] border-t-blue-500 rounded-full animate-spin"></div>
             <span class="text-white font-black text-4xl italic tracking-tighter">V</span>
         </div>
-        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Syncing Secure Environment</p>
+        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Loading Vantage Prime...</p>
     </div>
 
     <div class="flex min-h-screen">
@@ -42,10 +47,10 @@
             
             <header class="flex justify-between items-start mb-12">
                 <div>
-                    <h2 id="userName" class="text-4xl font-black text-slate-900 tracking-tight">Syncing...</h2>
+                    <h2 id="userName" class="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <div id="roleBadge" class="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg uppercase tracking-widest border border-slate-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span>
-                        Initializing
+                        Loading role...
                     </div>
                 </div>
                 
@@ -78,8 +83,7 @@
                     <div class="h-[1px] flex-1 bg-slate-200/60"></div>
                 </div>
                 <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
-                    <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
+                    <!-- Products will load here -->
                 </div>
             </section>
         </main>
@@ -105,108 +109,149 @@
 
         let currentUser = null;
 
-        // --- STEP 1: INSTANT UI (The "Magic" Part) ---
         function applyCachedIdentity() {
             const cName = localStorage.getItem('v_name');
-            const cRole = localStorage.getItem('v_role');
-            
-            if(cName) document.getElementById('userName').innerText = `Hello, ${cName} 👋`;
-            if(cRole === 'admin') revealAdmin();
+            if (cName) document.getElementById('userName').innerText = `Hello, ${cName} 👋`;
         }
 
         function revealAdmin() {
             document.getElementById('admin-box').classList.remove('hidden');
             document.getElementById('side-admin').classList.remove('hidden');
             const badge = document.getElementById('roleBadge');
-            badge.innerText = "ADMIN ACCESS";
-            badge.classList.replace('bg-slate-100', 'bg-red-50');
-            badge.classList.replace('text-slate-500', 'text-red-600');
-            badge.querySelector('span').classList.replace('bg-slate-400', 'bg-red-500');
+            badge.textContent = "ADMIN ACCESS";
+            badge.classList.remove('bg-slate-100', 'text-slate-500');
+            badge.classList.add('bg-red-50', 'text-red-600');
         }
 
-        // --- STEP 2: SYSTEM BOOT ---
+        function updateRoleUI(role) {
+            const badge = document.getElementById('roleBadge');
+            if (role === 'admin') {
+                revealAdmin();
+            } else if (role === 'seller') {
+                badge.textContent = "SELLER ACCOUNT";
+                badge.classList.remove('bg-red-50', 'text-red-600');
+                badge.classList.add('bg-slate-100', 'text-slate-500');
+            } else {
+                badge.textContent = "CUSTOMER";
+                badge.classList.remove('bg-red-50', 'text-red-600');
+                badge.classList.add('bg-slate-100', 'text-slate-500');
+            }
+        }
+
+        // Hide loader as soon as possible
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 400);
+        }
+
         async function boot() {
             applyCachedIdentity();
 
             const { data: { session } } = await _supabase.auth.getSession();
-            if(!session) { location.href = 'login.html'; return; }
-            
+            if (!session) {
+                location.href = 'login.html';
+                return;
+            }
+
             currentUser = session.user;
-            
-            // Sync current metadata name
-            const firstName = (currentUser.user_metadata.full_name || "User").split(' ')[0];
+
+            // Update name immediately
+            const firstName = (currentUser.user_metadata?.full_name || currentUser.email || "User").split(' ')[0];
             document.getElementById('userName').innerText = `Hello, ${firstName} 👋`;
             localStorage.setItem('v_name', firstName);
 
-            // Run DB fetches and Subscription
-            await Promise.all([syncProfileData(), loadProducts()]);
-            listenForBalance();
+            // Hide loader early — user can already see the page
+            hideLoader();
 
-            // Kill Loader
-            document.getElementById('loader').style.opacity = '0';
-            setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            // Load data in background (non-blocking for UI)
+            Promise.allSettled([
+                syncProfileData(),
+                loadProducts()
+            ]).then(() => {
+                listenForProfileChanges();
+            });
         }
 
         async function syncProfileData() {
-            const { data: p } = await _supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-            if(p) {
-                document.getElementById('balance').innerText = `₦${p.wallet_balance.toLocaleString()}`;
-                localStorage.setItem('v_role', p.role);
-                if(p.role === 'admin') revealAdmin();
-                else if(p.role === 'seller') {
-                   document.getElementById('roleBadge').innerText = "SELLER ACCOUNT";
-                } else {
-                   document.getElementById('roleBadge').innerText = "CUSTOMER";
+            try {
+                const { data: p } = await _supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (p) {
+                    document.getElementById('balance').innerText = `₦${(p.wallet_balance || 0).toLocaleString()}`;
+                    localStorage.setItem('v_role', p.role || 'customer');
+                    updateRoleUI(p.role || 'customer');
                 }
+            } catch (e) {
+                console.error('Profile sync error:', e);
             }
         }
 
-        // --- STEP 3: THE LIVE AUTO-UPDATE ---
-        function listenForBalance() {
-            _supabase.channel('wallet-sync')
-            .on('postgres_changes', { 
-                event: 'UPDATE', 
-                schema: 'public', 
-                table: 'profiles', 
-                filter: `id=eq.${currentUser.id}` 
-            }, (payload) => {
-                const balEl = document.getElementById('balance');
-                balEl.innerText = `₦${payload.new.wallet_balance.toLocaleString()}`;
-                
-                // Visual Pulse Effect
-                balEl.classList.add('text-blue-600', 'scale-110');
-                setTimeout(() => balEl.classList.remove('text-blue-600', 'scale-110'), 1500);
-            })
-            .subscribe();
+        function listenForProfileChanges() {
+            _supabase.channel('profile-sync')
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'profiles',
+                    filter: `id=eq.${currentUser.id}`
+                }, (payload) => {
+                    const newData = payload.new;
+                    if (newData.wallet_balance !== undefined) {
+                        const balEl = document.getElementById('balance');
+                        balEl.innerText = `₦${newData.wallet_balance.toLocaleString()}`;
+                        balEl.classList.add('text-blue-600', 'scale-110');
+                        setTimeout(() => balEl.classList.remove('text-blue-600', 'scale-110'), 1200);
+                    }
+                    if (newData.role) {
+                        localStorage.setItem('v_role', newData.role);
+                        updateRoleUI(newData.role);
+                    }
+                })
+                .subscribe();
         }
 
         async function loadProducts() {
-            const { data } = await _supabase.from('products').select('*').eq('is_approved', true).limit(8);
-            if(data) {
-                document.getElementById('grid').innerHTML = data.map(i => `
-                    <div class="bg-white p-5 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
-                        <div class="aspect-square bg-slate-50 rounded-[2.5rem] overflow-hidden mb-5">
-                            <img src="${i.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+            try {
+                const { data } = await _supabase
+                    .from('products')
+                    .select('*')
+                    .eq('is_approved', true)
+                    .limit(8);
+
+                const grid = document.getElementById('grid');
+                if (data && data.length > 0) {
+                    grid.innerHTML = data.map(i => `
+                        <div class="bg-white p-5 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
+                            <div class="aspect-square bg-slate-50 rounded-[2.5rem] overflow-hidden mb-5">
+                                <img src="${i.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="${i.name}">
+                            </div>
+                            <h5 class="font-bold text-[11px] text-slate-500 uppercase tracking-widest px-3 truncate">${i.name}</h5>
+                            <p class="text-blue-600 font-black text-xl px-3 mt-1">₦${i.price.toLocaleString()}</p>
                         </div>
-                        <h5 class="font-bold text-[11px] text-slate-500 uppercase tracking-widest px-3 truncate">${i.name}</h5>
-                        <p class="text-blue-600 font-black text-xl px-3 mt-1">₦${i.price.toLocaleString()}</p>
-                    </div>
-                `).join('');
+                    `).join('');
+                } else {
+                    grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-12">No products available yet.</p>`;
+                }
+            } catch (e) {
+                console.error('Products load error:', e);
             }
         }
 
         window.pay = () => {
             const amount = document.getElementById('amt').value;
-            if(!amount || amount <= 0) return;
+            if (!amount || amount <= 0) return;
             
             const handler = PaystackPop.setup({
                 key: 'pk_test_77e96f0549cd29e76ce2117f8adf00a5a96658ea',
                 email: currentUser.email,
                 amount: amount * 100,
-                callback: () => {
-                    document.getElementById('pay-modal').style.display = 'none';
-                    // The "listenForBalance" function will handle the UI update automatically!
-                }
+                callback: () => document.getElementById('pay-modal').style.display = 'none'
             });
             handler.openIframe();
         };
@@ -216,6 +261,7 @@
             _supabase.auth.signOut().then(() => location.href = 'login.html');
         };
 
+        // Start the app
         boot();
     </script>
 </body>

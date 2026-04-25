@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vantage | Live Dashboard</title>
+    <title>Vantage | High Speed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
-<body class="bg-[#F8FAFC] text-slate-900 overflow-x-hidden font-sans">
+<body class="bg-[#F8FAFC] text-slate-900 font-sans">
 
     <div id="loader" class="fixed inset-0 bg-[#0F172A] z-[999] flex flex-col items-center justify-center transition-all duration-500">
         <div class="relative flex items-center justify-center mb-6">
@@ -16,64 +16,60 @@
             <div class="absolute w-20 h-20 border-2 border-t-blue-500 rounded-full animate-spin"></div>
             <span class="text-white font-black text-2xl italic">V</span>
         </div>
-        <p id="loader-status" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em]">Establishing Secure Link...</p>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em]">Optimizing Identity...</p>
     </div>
 
     <div class="flex min-h-screen">
         <aside class="w-72 bg-[#0F172A] hidden lg:flex flex-col p-8 sticky top-0 h-screen text-white">
             <h1 class="text-2xl font-black text-blue-500 mb-12 italic">VANTAGE</h1>
             <nav class="space-y-3 flex-1">
-                <button class="w-full text-left p-4 rounded-2xl bg-blue-600 font-bold shadow-lg">🏠 Home</button>
+                <button class="w-full text-left p-4 rounded-2xl bg-blue-600 font-bold">🏠 Home</button>
                 <a href="admin.html" id="side-admin" class="hidden w-full flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 font-bold">🛡️ Admin Portal</a>
             </nav>
-            <button onclick="logout()" class="p-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Sign Out</button>
+            <button onclick="logout()" class="p-4 text-slate-500 font-bold text-xs uppercase">Sign Out</button>
         </aside>
 
         <main class="flex-1 p-6 lg:p-12">
-            <header class="flex justify-between items-center mb-12">
+            <header class="flex justify-between items-center mb-10">
                 <div>
-                    <h2 id="userName" class="text-4xl font-black tracking-tight">Syncing...</h2>
-                    <p id="userRole" class="text-blue-600 font-black text-[10px] uppercase tracking-widest mt-1 opacity-50">Checking Authority</p>
+                    <h2 id="userName" class="text-3xl font-black tracking-tight italic">...</h2>
+                    <p id="userRole" class="text-blue-600 font-black text-[9px] uppercase tracking-widest mt-1 opacity-70">Securing Access</p>
                 </div>
-                <div class="flex gap-4">
-                    <div class="bg-white shadow-xl shadow-blue-900/5 rounded-[2rem] px-8 py-4 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Available Funds</p>
+                <div class="bg-white shadow-xl shadow-blue-900/5 rounded-[2rem] px-8 py-4 border border-slate-100 flex items-center gap-6">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Balance</p>
                         <h3 id="balance" class="text-2xl font-black text-slate-900">₦0.00</h3>
                     </div>
-                    <button onclick="document.getElementById('pay-modal').style.display='flex'" class="bg-blue-600 text-white w-14 h-14 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:scale-110 transition-transform">+</button>
+                    <button onclick="document.getElementById('pay-modal').style.display='flex'" class="bg-blue-600 text-white w-10 h-10 rounded-xl font-black shadow-lg">+</button>
                 </div>
             </header>
 
-            <div id="control-center-box" class="hidden mb-12">
-                <a href="admin.html" class="block bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden border-b-4 border-blue-500 hover:scale-[1.01] transition-all">
-                    <div class="relative z-10 flex justify-between items-center">
-                        <div>
-                            <h4 class="text-blue-400 font-bold text-[10px] uppercase tracking-[0.3em] mb-2 text-white/60">System Executive</h4>
-                            <h3 class="text-white text-3xl font-black">Control Center</h3>
-                            <p class="text-slate-400 text-sm mt-2">Manage products, verify transactions, and override system settings.</p>
-                        </div>
-                        <div class="bg-white/10 p-6 rounded-[2rem] text-3xl">⚙️</div>
+            <div id="control-center-box" class="hidden mb-10">
+                <a href="admin.html" class="block bg-gradient-to-r from-slate-900 to-indigo-950 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden border-b-4 border-blue-500">
+                    <div class="relative z-10">
+                        <h3 class="text-white text-3xl font-black italic">Control Center</h3>
+                        <p class="text-slate-400 text-sm mt-1">Manage system data & verify pending goods.</p>
                     </div>
+                    <div class="absolute right-10 top-1/2 -translate-y-1/2 text-4xl opacity-20">🛡️</div>
                 </a>
             </div>
 
             <section>
-                <h3 class="text-xl font-black text-slate-800 mb-8">Marketplace Gallery</h3>
-                <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
-                    <div class="h-64 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
+                <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 px-2">Market Inventory</h3>
+                <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="h-56 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
+                    <div class="h-56 bg-slate-100 rounded-[2.5rem] animate-pulse"></div>
                 </div>
             </section>
         </main>
     </div>
 
     <div id="pay-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm hidden z-[1000] items-center justify-center p-4">
-        <div class="bg-white p-12 rounded-[3.5rem] w-full max-w-md text-center shadow-2xl">
-            <h3 class="text-2xl font-black mb-2 text-slate-900 italic">Vault Funding</h3>
-            <p class="text-slate-400 text-sm mb-8">Increase your balance via secure gateway.</p>
-            <input type="number" id="amt" placeholder="₦ 0.00" class="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl mb-6 text-center font-black text-3xl outline-none focus:border-blue-500">
-            <button onclick="pay()" class="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl shadow-xl shadow-blue-500/20">Authorize Payment</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="mt-6 text-slate-400 text-[10px] font-black uppercase tracking-widest">Return to Market</button>
+        <div class="bg-white p-12 rounded-[3.5rem] w-full max-w-sm text-center">
+            <h3 class="text-2xl font-black mb-6 italic">Fund Vault</h3>
+            <input type="number" id="amt" placeholder="₦ 0.00" class="w-full p-6 bg-slate-50 border-2 rounded-3xl mb-6 text-center font-black text-3xl outline-none focus:border-blue-500">
+            <button onclick="pay()" class="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xl shadow-xl shadow-blue-500/20">Authorize</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" class="mt-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">Close</button>
         </div>
     </div>
 
@@ -85,66 +81,55 @@
         let userSession = null;
 
         async function init() {
-            // 1. Instant Session Check
+            // 1. Instant Cache Check
+            const cachedRole = localStorage.getItem('vantage_role');
+            if(cachedRole === 'admin') showAdminUI();
+
             const { data: { session } } = await _supabase.auth.getSession();
             if(!session) { location.href = 'login.html'; return; }
             userSession = session;
 
-            // 2. Instant Name (No wait)
-            document.getElementById('userName').innerText = `Hello, ${session.user.user_metadata.full_name || 'User'}`;
+            // Display name immediately from session
+            document.getElementById('userName').innerText = `Hello, ${session.user.user_metadata.full_name.split(' ')[0]}`;
 
-            // 3. Load Data & Listen for Changes
-            await syncProfile();
-            await loadProducts();
-            subscribeToWallet(); // Start the live price listener
-
-            // 4. Kill Loader
+            // 2. Load Data
+            await syncAll();
+            
+            // 3. Close Loader
             document.getElementById('loader').style.opacity = '0';
             setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
         }
 
-        async function syncProfile() {
-            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', userSession.user.id).single();
-            if(profile) {
-                document.getElementById('balance').innerText = `₦${profile.wallet_balance.toLocaleString()}`;
-                document.getElementById('userRole').innerText = profile.role + " ACCESS";
-                document.getElementById('userRole').style.opacity = '1';
+        async function syncAll() {
+            const [pRes, gRes] = await Promise.all([
+                _supabase.from('profiles').select('*').eq('id', userSession.user.id).single(),
+                _supabase.from('products').select('*').eq('is_approved', true).limit(8)
+            ]);
 
-                if(profile.role === 'admin') {
-                    document.getElementById('control-center-box').classList.remove('hidden');
-                    document.getElementById('side-admin').classList.remove('hidden');
-                }
+            if(pRes.data) {
+                const u = pRes.data;
+                document.getElementById('balance').innerText = `₦${u.wallet_balance.toLocaleString()}`;
+                document.getElementById('userRole').innerText = u.role.toUpperCase() + " ACCOUNT";
+                
+                // Cache role for next load
+                localStorage.setItem('vantage_role', u.role);
+                if(u.role === 'admin') showAdminUI();
             }
-        }
 
-        // --- THE AUTO-UPDATE ENGINE ---
-        function subscribeToWallet() {
-            _supabase
-                .channel('public:profiles')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userSession.user.id}` }, 
-                payload => {
-                    console.log('Wallet Updated Live:', payload.new.wallet_balance);
-                    document.getElementById('balance').innerText = `₦${payload.new.wallet_balance.toLocaleString()}`;
-                    // Trigger a tiny animation to show it updated
-                    document.getElementById('balance').classList.add('text-green-500', 'scale-110');
-                    setTimeout(() => document.getElementById('balance').classList.remove('text-green-500', 'scale-110'), 1000);
-                })
-                .subscribe();
-        }
-
-        async function loadProducts() {
-            const { data } = await _supabase.from('products').select('*').eq('is_approved', true).limit(10);
-            if(data) {
-                document.getElementById('grid').innerHTML = data.map(i => `
-                    <div class="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
-                        <div class="aspect-square bg-slate-50 rounded-[2rem] overflow-hidden mb-4">
-                            <img src="${i.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        </div>
-                        <h5 class="font-bold text-[10px] text-slate-500 uppercase tracking-widest truncate px-2">${i.name}</h5>
-                        <p class="text-blue-600 font-black text-lg px-2">₦${i.price.toLocaleString()}</p>
+            if(gRes.data) {
+                document.getElementById('grid').innerHTML = gRes.data.map(i => `
+                    <div class="bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                        <img src="${i.image_url}" class="w-full h-32 object-cover rounded-[1.8rem] mb-3">
+                        <h5 class="font-bold text-[10px] text-slate-500 uppercase px-2 truncate">${i.name}</h5>
+                        <p class="text-blue-600 font-black text-sm px-2">₦${i.price.toLocaleString()}</p>
                     </div>
                 `).join('');
             }
+        }
+
+        function showAdminUI() {
+            document.getElementById('control-center-box').classList.remove('hidden');
+            document.getElementById('side-admin').classList.remove('hidden');
         }
 
         window.pay = () => {
@@ -153,17 +138,24 @@
                 key: 'pk_test_77e96f0549cd29e76ce2117f8adf00a5a96658ea',
                 email: userSession.user.email,
                 amount: amount * 100,
-                callback: (res) => {
+                callback: () => {
                     document.getElementById('pay-modal').style.display = 'none';
-                    alert("Payment received! Watch your balance update automatically.");
+                    // MANUAL POLL: Check balance every 2 seconds for 10 seconds to ensure it updates
+                    let checkCount = 0;
+                    const poller = setInterval(async () => {
+                        const { data } = await _supabase.from('profiles').select('wallet_balance').eq('id', userSession.user.id).single();
+                        document.getElementById('balance').innerText = `₦${data.wallet_balance.toLocaleString()}`;
+                        checkCount++;
+                        if(checkCount > 5) clearInterval(poller);
+                    }, 2000);
                 }
             });
             handler.openIframe();
         };
 
-        window.logout = () => { _supabase.auth.signOut(); location.href='login.html'; };
+        window.logout = () => { localStorage.clear(); _supabase.auth.signOut(); location.href='login.html'; };
 
         init();
     </script>
 </body>
-</html>
+    </html>

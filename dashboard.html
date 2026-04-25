@@ -7,11 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script>
-    <style>
-        /* Quick fallback styles while Tailwind loads */
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-    </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-500 selection:text-white">
 
@@ -21,7 +16,7 @@
             <div class="absolute w-24 h-24 border-[3px] border-t-blue-500 rounded-full animate-spin"></div>
             <span class="text-white font-black text-4xl italic tracking-tighter">V</span>
         </div>
-        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Loading Vantage Prime...</p>
+        <p id="loader-msg" class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.5em] animate-pulse">Syncing your profile...</p>
     </div>
 
     <div class="flex min-h-screen">
@@ -49,7 +44,7 @@
                 <div>
                     <h2 id="userName" class="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <div id="roleBadge" class="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg uppercase tracking-widest border border-slate-200">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                         Loading role...
                     </div>
                 </div>
@@ -62,6 +57,11 @@
                     <button onclick="document.getElementById('pay-modal').style.display='flex'" class="bg-blue-600 text-white w-16 h-16 rounded-3xl font-black shadow-xl shadow-blue-500/30 hover:scale-110 active:scale-95 transition-all text-2xl">+</button>
                 </div>
             </header>
+
+            <!-- Quick Refresh Button (for testing) -->
+            <button onclick="manualRefresh()" class="mb-6 px-5 py-2 text-xs font-bold bg-slate-200 hover:bg-slate-300 rounded-2xl transition-colors">
+                🔄 Refresh Role & Balance
+            </button>
 
             <div id="admin-box" class="hidden mb-12">
                 <a href="admin.html" class="group block bg-gradient-to-br from-slate-900 to-indigo-950 p-10 rounded-[3.5rem] shadow-2xl relative overflow-hidden border-b-[6px] border-blue-600 hover:scale-[1.01] transition-all">
@@ -83,7 +83,7 @@
                     <div class="h-[1px] flex-1 bg-slate-200/60"></div>
                 </div>
                 <div id="grid" class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <!-- Products will load here -->
+                    <!-- Products load here -->
                 </div>
             </section>
         </main>
@@ -138,13 +138,10 @@
             }
         }
 
-        // Hide loader as soon as possible
         function hideLoader() {
             const loader = document.getElementById('loader');
             loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-            }, 400);
+            setTimeout(() => loader.style.display = 'none', 400);
         }
 
         async function boot() {
@@ -158,62 +155,79 @@
 
             currentUser = session.user;
 
-            // Update name immediately
             const firstName = (currentUser.user_metadata?.full_name || currentUser.email || "User").split(' ')[0];
             document.getElementById('userName').innerText = `Hello, ${firstName} 👋`;
             localStorage.setItem('v_name', firstName);
 
-            // Hide loader early — user can already see the page
-            hideLoader();
+            hideLoader(); // Hide loader very early
 
-            // Load data in background (non-blocking for UI)
-            Promise.allSettled([
-                syncProfileData(),
-                loadProducts()
-            ]).then(() => {
-                listenForProfileChanges();
-            });
+            // Load role & balance FIRST (fast path)
+            await syncProfileData();
+
+            // Then load products in background
+            loadProducts();
+
+            // Start realtime
+            listenForProfileChanges();
         }
 
         async function syncProfileData() {
             try {
-                const { data: p } = await _supabase
+                const { data: p, error } = await _supabase
                     .from('profiles')
-                    .select('*')
+                    .select('wallet_balance, role')
                     .eq('id', currentUser.id)
                     .single();
 
+                if (error) throw error;
+
                 if (p) {
+                    // Balance
                     document.getElementById('balance').innerText = `₦${(p.wallet_balance || 0).toLocaleString()}`;
-                    localStorage.setItem('v_role', p.role || 'customer');
-                    updateRoleUI(p.role || 'customer');
+
+                    // Role
+                    const role = p.role || 'customer';
+                    localStorage.setItem('v_role', role);
+                    updateRoleUI(role);
+                    console.log('✅ Profile loaded - Role:', role);
                 }
             } catch (e) {
-                console.error('Profile sync error:', e);
+                console.error('❌ Profile fetch error:', e);
             }
         }
 
         function listenForProfileChanges() {
-            _supabase.channel('profile-sync')
+            const channel = _supabase.channel('profile-sync')
                 .on('postgres_changes', {
                     event: 'UPDATE',
                     schema: 'public',
                     table: 'profiles',
                     filter: `id=eq.${currentUser.id}`
                 }, (payload) => {
+                    console.log('🔴 Realtime update received:', payload.new);
+                    
                     const newData = payload.new;
+                    
+                    // Balance update
                     if (newData.wallet_balance !== undefined) {
                         const balEl = document.getElementById('balance');
                         balEl.innerText = `₦${newData.wallet_balance.toLocaleString()}`;
                         balEl.classList.add('text-blue-600', 'scale-110');
                         setTimeout(() => balEl.classList.remove('text-blue-600', 'scale-110'), 1200);
                     }
+                    
+                    // Role update
                     if (newData.role) {
                         localStorage.setItem('v_role', newData.role);
                         updateRoleUI(newData.role);
                     }
                 })
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('Realtime subscription status:', status);
+                    if (status === 'SUBSCRIBED') {
+                        console.log('✅ Realtime is ready for role & balance updates');
+                    }
+                });
         }
 
         async function loadProducts() {
@@ -225,7 +239,7 @@
                     .limit(8);
 
                 const grid = document.getElementById('grid');
-                if (data && data.length > 0) {
+                if (data && data.length) {
                     grid.innerHTML = data.map(i => `
                         <div class="bg-white p-5 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
                             <div class="aspect-square bg-slate-50 rounded-[2.5rem] overflow-hidden mb-5">
@@ -235,13 +249,17 @@
                             <p class="text-blue-600 font-black text-xl px-3 mt-1">₦${i.price.toLocaleString()}</p>
                         </div>
                     `).join('');
-                } else {
-                    grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-12">No products available yet.</p>`;
                 }
             } catch (e) {
                 console.error('Products load error:', e);
             }
         }
+
+        // Manual refresh for testing role/balance
+        window.manualRefresh = async () => {
+            await syncProfileData();
+            console.log('Manual refresh completed');
+        };
 
         window.pay = () => {
             const amount = document.getElementById('amt').value;
@@ -261,8 +279,7 @@
             _supabase.auth.signOut().then(() => location.href = 'login.html');
         };
 
-        // Start the app
         boot();
     </script>
 </body>
-    </html>
+        </html>
